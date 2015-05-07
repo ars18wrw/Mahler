@@ -2,9 +2,6 @@ import org.jfugue.Pattern;
 import org.jfugue.Player;
 
 import java.awt.*;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -13,104 +10,224 @@ import java.util.*;
 
 public class Mahler {
 
+    static int curVoice = 0;
+    static int lastVoice = 0;
+    static String curInstrument = "Piano";
+    static String curTempo = "120";
+
+    static int curOctave = 5;
+    static char curDuration = 'q';
+
+
     static Player player = new Player();
     static Pattern pattern = new Pattern();
     static Scanner in = new Scanner(System.in);
     public static void main(String[] args) {
         // main melody
-        System.out.println("Mahler music editor\n" +
-                "Loading...");
+        System.out.println("Mahler music editor");
+//        System.out.println("Don't know what to do?\n" +
+//                "Try \"author help help\".");
+
         EventQueue.invokeLater(new Runnable() {
             public void run() {
-                play(Melodies.mahSymphony5);
+                play(Melodies.vivaldi);
             }
         });
         System.out.println("Hello, " + System.getProperty("user.name") + ".");
         while(true) {
             switch (in.next()) {
-                // play melody of current dayperiod
+                case "help":
+                    help();
+                    break;
                 case "hello":
                     hello();
                     break;
-                // new pattern or voice or smth else
-                case "new":
-                    switch(in.next()) {
-                        case "pattern":
-                            pattern = new Pattern("V0");
-                            break;
-                        case "voice":
-                            pattern.add("V1");
-                    }
-                    break;
-
-                case "add":
-                    pattern.add(in.next());
-                    break;
-
-                case "play":
-                    play();
-                    break;
-
-                case "Tania":
-                    System.out.println("Liebe...");
-                    break;
-
                 case "init":
                     init();
                     break;
-
                 case "print":
                     print();
                     break;
-
+                case "play":
+                    play();
+                    break;
                 case "mahler":
                     play(Melodies.mahSymphony5);
+                    break;
+                case "status":
+                    status();
+                    break;
+                case "try":
+                    tryPitch(in.next());
+                    break;
+                case "a":
+                case "append":
+                    append();
+                    break;
+                case "instrument":
+                    instrument();
+                    break;
+                case "clear":
+                    clear();
+                    break;
+                case "voice":
+                    voice();
+                    break;
+                case "tempo":
+                    tempo();
+                    break;
+                case "set":
+                    set();
+                    break;
+                case "p":
+                case "put":
+                    put();
+                    break;
+                case "o":
+                case "octave":
+                    octave(null);
+                    break;
+                case "d":
+                case "duration":
+                    duration();
+                    break;
+                case "up":
+                    octave(true);
+                    break;
+                case "down":
+                    octave(false);
+                    break;
+                default:
+                    defaultOperation();
                     break;
             }
         }
     }
 
+    public static void octave(Boolean isUp) {
+        if (null==isUp) {
+            curOctave = in.nextInt();
+        } else if (isUp) {
+            curOctave++;
+        } else {
+            curOctave--;
+        }
+    }
 
-    static void hello() {
-        player.stop();
+    public static void duration() {
+        curDuration = in.next().charAt(0);
+    }
+
+    public static void put() {
+        String temp = in.next();
+        while (!"--".equals(temp)) {
+            pattern.add(temp+curOctave+curDuration);
+            temp = in.next();
+        }
+    }
+
+    private static void set() {
+        pattern.setProperty(in.next(), in.next());
+    }
+
+    private static void tempo() {
+        curTempo = in.next();
+        pattern.add(" T[" + curTempo + "] ");
+    }
+
+    private static void voice() {
+        if (!in.hasNextInt()) {
+            lastVoice++;
+            curVoice = lastVoice;
+            pattern.add(" V" + curVoice+ " ");
+        } else {
+            int tempVoice = Integer.parseInt(in.next());
+            curVoice = tempVoice;
+            pattern.add(" V" + curVoice + " ");
+        }
+
+    }
+
+    private static void instrument() {
+        String temp = in.next();
+        pattern.add("I["+temp+"]");
+        curInstrument = temp;
+    }
+
+    private static void append() {
+        String temp = in.next();
+        while (!"--".equals(temp)) {
+            pattern.add(temp);
+            temp = in.next();
+        }
+
+    }
+
+    private static void defaultOperation() {
+        System.out.println("Mahler don't know this command.\n" +
+                "Please, try \"help\" to find required information.\n");
+    }
+
+    private static void tryPitch(String ss){
+        player.play(String.valueOf(ss.charAt(0)));
+    }
+
+    private static void status() {
+        System.out.println("Author: "+ pattern.getProperty("Author"));
+        System.out.println("Title: " + pattern.getTitle());
+        System.out.println("Current voice: " + curVoice);
+        System.out.println("Current instrument: " + curInstrument);
+        System.out.println("Current tempo: " + curTempo);
+    }
+
+    private static void help() {
+        System.out.println(Info.info.get(in.next()));
+    }
+
+    private static void hello() {
+
         java.util.TimeZone tz = java.util.TimeZone.getTimeZone("GMT+1");
         java.util.Calendar c = java.util.Calendar.getInstance(tz);
         int hour = c.get(java.util.Calendar.HOUR_OF_DAY);
-        // for notes
-        String notes = null;
-        String dayPeriod = null;
 
+        String dayPeriod = null;
         // night
         if (hour < 6) {
             dayPeriod = "night";
-            notes = "Dmin Dmin^ Dmin^^ Dmin^^^";
         } // morning
         else if (hour < 12) {
             dayPeriod = "morning";
-            notes = "Emaj Emaj^ Emaj^^ Emaj^^^";
         } // afternoon
         else if (hour < 18) {
             dayPeriod = "afternoon";
-            notes = "Cmaj Cmaj^ Cmaj^^ Cmajn^^^";
         } // evening
         else if (hour < 24) {
             dayPeriod = "evening";
-            notes = "Amin Amin^ Amin^^ Amin^^^";
         }
         System.out.println("Thanks for greetings! Good " + dayPeriod + "!");
-        play(notes);
+        player.play(Melodies.greetings);
     }
 
-    static void init() {
+    private static void init() {
         pattern = new Pattern();
         pattern.add("V0 a4 b4 c d e f g# aw");
     }
 
-    static void print() {
+    private static void clear() {
+        pattern = new Pattern();
+        curDuration = 'q';
+        curOctave = 5;
+        curTempo = "120";
+        curInstrument = "Piano";
+        curVoice = 0;
+        lastVoice = 0;
+    }
+
+    private static void print() {
         System.out.println(pattern.toString());
     }
 
-    static void play() {
+    private static void play() {
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 player.play(pattern);
@@ -118,7 +235,7 @@ public class Mahler {
         });
     }
 
-    static void play(final String pat){
+    private static void play(String pat){
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 player.play(pat);
